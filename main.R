@@ -20,7 +20,7 @@ library(shiny)
 library(shiny)
 runApp('P:/SimulationTools',host="0.0.0.0",port=5050)
 
-172.16.2.245:5050
+#172.16.2.245:5050
 
 
 
