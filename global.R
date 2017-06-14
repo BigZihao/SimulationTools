@@ -15,6 +15,7 @@ require(lubridate)
 
 generatedata=function(time1,dim1,dim2){
   
+
   time1=time1*52
   driver=10
   X=matrix(rnorm(time1*dim1*dim2*driver,1,10),ncol=driver)
@@ -56,7 +57,7 @@ generatedata=function(time1,dim1,dim2){
   
   
   # Your starting date, plus 52 more dates at weekly intervals
-  xDates <- dmy("8/3/2013") + weeks(1:time1)
+  xDates <- dmy("8/5/2013") + weeks(1:time1)
   
   # A data frame of the dates, the month of the year, and the week of the month
   xYMW <- data.frame(date=(xDates), month=month(xDates))
@@ -72,3 +73,32 @@ generatedata=function(time1,dim1,dim2){
   test %>% group_by(Brand,Product) %>% summarize(n())
   return(list(test,true))
 }
+
+
+
+generatedata1=function(time1,dim1,dim2){
+
+  time1=time1*52
+  error=round(rnorm(time1*dim1*dim2*driver,1,10),2)
+
+  ##################  Add time trend    ############
+  rate=0.5
+  Base=50+rep(rate*(1:time1),dim1*dim2)
+  Y=Base+error
+
+  # Your starting date, plus 52 more dates at weekly intervals
+  xDates <- dmy("8/5/2013") + weeks(1:time1)
+  
+  # A data frame of the dates, the month of the year, and the week of the month
+  xYMW <- data.frame(date=(xDates), month=month(xDates))
+  test=data.frame(Brand=rep(paste("B",(1:dim1)),each=dim2*time1),
+                  Product=rep(rep(paste("P",(1:dim2)),each=time1),dim1),
+                  date=rep((xDates),dim1*dim2), 
+                  month=rep(month(xDates),dim1*dim2),
+                  Y=Y,
+                  Base=Base)
+  test$Brand=as.factor(test$Brand)
+  test$Product=as.factor(test$Product)
+  return(test)
+  
+  }
