@@ -79,7 +79,7 @@ generatedata=function(time1,dim1,dim2){
 generatedata1=function(time1,dim1,dim2){
 
   time1=time1*52
-  error=round(rnorm(time1*dim1*dim2*driver,1,10),2)
+  error=round(rnorm(time1*dim1*dim2*driver,1,15),2)
 
   ##################  Add time trend    ############
   rate=0.5

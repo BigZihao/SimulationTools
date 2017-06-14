@@ -28,7 +28,7 @@ navbarPage(
                                        "Product:", 3,
                                        min = 2, max = 8),
                           numericInput("Year",
-                                       "Year:", 5,
+                                       "Year:", 3,
                                        min = 2, max = 8),
                          
                          
