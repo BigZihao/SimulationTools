@@ -83,7 +83,7 @@ generatedata1=function(time1,dim1,dim2){
 
   ##################  Add time trend    ############
   rate=0.5
-  Base=50+rep(rate*(1:time1),dim1*dim2)
+  Base=50
   Y=Base+error
 
   # Your starting date, plus 52 more dates at weekly intervals

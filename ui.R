@@ -19,9 +19,11 @@ navbarPage(
   
   
 
-  tabPanel("Simulate Data",
+  tabPanel("Dimension Setup",
            
-           sidebarPanel( numericInput("Brand",
+           sidebarPanel( 
+             textInput("Projectname", label = h3("Project Name"), value = "Project"),
+             numericInput("Brand",
                                        "Brand:", 2,
                                        min = 2, max = 6),
                           numericInput("Product",
@@ -29,36 +31,72 @@ navbarPage(
                                        min = 2, max = 8),
                           numericInput("Year",
                                        "Year:", 3,
-                                       min = 2, max = 8),
-                         
-                         
-       
-                          checkboxInput("Seasonal", "Seasonal", value = FALSE, width = NULL),
-                          checkboxInput("Holiday","Holiday", value = FALSE, width = NULL),
-                         sliderInput("Cannibalization", label = h3("Cannibalization"), min = 0, max = 1, value = 0.1),
-                         sliderInput("Halo", label = h3("Halo"), min = 0, max = 1, value = 0.1)),
-           
+                                       min = 2, max = 8)
+                       #  sliderInput("Cannibalization", label = h3("Cannibalization"), min = 0, max = 1, value = 0.1),
+                        # sliderInput("Halo", label = h3("Halo"), min = 0, max = 1, value = 0.1)
+                       ),
            mainPanel(
-           fluidRow(
-             h3("Dependent Trend"),
-             plotlyOutput('plot1')
+             fluidRow(
+             
+               plotlyOutput('plot1')
+             )
+             
            )
+           
      
-           )
   ),
+  
+  
+  
+  tabPanel("Category Variable",
+           
+           sidebarPanel( checkboxInput("Seasonal", "Seasonal", value = FALSE, width = NULL),
+                         checkboxInput("Holiday","Holiday", value = FALSE, width = NULL),
+                        sliderInput("Marketshare", label = h3("Market Share"), min = 0, max = 1, value = 0.1)
+                         # sliderInput("Halo", label = h3("Halo"), min = 0, max = 1, value = 0.1)
+           ),
+           mainPanel(
+             fluidRow(
+               
+               plotlyOutput('plotcategory')
+             )
+             
+           )
+           
+           
+           
+           
+           
+           
+  ),
+
   
   
   tabPanel("Marketing Activities",
            
            sidebarPanel(
-             sliderInput("TV", label = h3("TV"), min = 0, max = 100, value = c(20,50)),
-             checkboxInput("Pattern","Monthly Pattern", value = FALSE, width = NULL),
-             sliderInput("Promotion", label = h3("Promotion"), min = 0, max = 100, value = 50),
-             sliderInput("Price", label = h3("Price"), min = 0, max = 100, value = 50)
+             textInput("Activityname", label = h3("Activity Measure Name"), value = "TV"),
+             textInput("variablen", label = h3("Variable Numbers"), value = "2"),
+             textInput("rangemin", label = h3("Range Min"), value = "100"),
+             textInput("rangemax", label = h3("Range Max"), value = "250"),
+             #sliderInput("TV", label = h3("TV GRP"), min = 100, max = 250, value = c(120,150)),
+             sliderInput("TVRT", label = h3("retention rate"), min = 0, max = 1, value = 0.9),
+             h3("Flghting Pattern"),
+             #checkboxInput("Pattern","Pattern 1", value = FALSE, width = NULL),
+               fileInput('ImportPattern', 'Import Pattern',
+                         accept=c('text/csv', 
+                                  'text/comma-separated-values,text/plain', 
+                                  '.csv')),
+             textInput("Elasticity", label = h3("Elasticity"), value = "1"),
+             textInput("ROI", label = h3("ROI"), value = "1"),
+             br(),
+             actionButton("goButton", "Go!"),
+             p("Click the button to update the variable in simulation data")
+      
            ),
+           
            mainPanel(
              fluidRow(
-               h3("TV"),
                plotlyOutput('plotTV')
              )
              
@@ -68,10 +106,11 @@ navbarPage(
   
   
   tabPanel("Data Format and Download",
+
            mainPanel(
              fluidRow(
                h3("Download Data"),
-               downloadLink('downloadData', 'Download') ,
+               downloadButton('downloadData', 'Download'),
                DT::dataTableOutput("table")
              )
              

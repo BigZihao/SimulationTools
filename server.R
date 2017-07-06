@@ -21,23 +21,66 @@ library(lme4)
 # Define server logic required to draw a histogram
 
 function(input, output){
+
   
+  contents <- reactive({
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, it will be a data frame with 'name',
+    # 'size', 'type', and 'datapath' columns. The 'datapath'
+    # column will contain the local filenames where the data can
+    # be found.
+    inFile <- input$ImportPattern
+    
+    if(is.null(inFile))
+      return(NULL)
+    
+    a= read.csv(inFile$datapath, header = FALSE, sep=",")
+    return(a)
+  })
   
+  if( values$default==0){final <<- dataInputcategory()}
   
   dataInputTV <- reactive({
-    TV = round(runif(input$Year*input$Brand*input$Product*52,min=input$TV[1],max=input$TV[2]),2)
-    if(input$Pattern==T){
-      TVP=rep(c(1,0,0,0),input$Year*input$Brand*input$Product*52/4)
-      TV=TV*TVP
+    
+    TV = round(runif(input$Year*input$Brand*input$Product*52,min=as.numeric(input$rangemin),
+                     max=as.numeric(input$rangemax)),2)
+    
+    TVP = rep(1,input$Year*input$Brand*input$Product*52)
+
+    if(is.null(contents())==FALSE){
+      TVP = contents()
+      TVP = rep(as.vector(as.numeric(TVP)),input$Year*input$Brand*input$Product)
     }
-    return(TV)
+    TVP = as.numeric(TVP)
+    
+    TV=TV*TVP
+    TV = data.frame(TV)
+    names(TV) = paste(input$Activityname,"1")
+    
+    for(i in c(2:(input$variablen))){
+      TV[paste(input$Activityname,i)] = round(runif(input$Year*input$Brand*input$Product*52,min=as.numeric(input$rangemin),
+                                                                      max=as.numeric(input$rangemax)),2)*TVP}
+    
+    return(data.frame(TV))
   })
   
   output$plotTV <-  renderPlotly({
     time1=input$Year*52
-    ggplotly(data.frame( date = dmy("8/5/2013") + weeks(1:time1),TV=dataInputTV()[1:time1]) %>% ggplot(aes(date,TV)) +geom_bar(position = 'stack', stat = 'identity')+ylim(c(0,100)))
+    ggplotly(data.frame( date = dmy("8/5/2013") + weeks(1:time1),TV=dataInputTV()[1:time1,1]) %>% ggplot(aes(date,TV)) +geom_bar( stat = 'identity')+ylim(c(0,as.numeric(input$rangemax))))
   }
   )
+  
+  dataInputTVRT <- reactive({
+    
+    TV = dataInputTV()
+    retentionrate = as.numeric(input$TVRT)
+    retention = retentionrate^(c(1,2,3,4,5,6,7,8,9,10))
+    TVRT = TV
+    for(j in 1:dim(TVRT)[2]){
+    for(i in 1:(dim(TVRT)[1]-10)){TVRT[i:(i+9),j]=as.numeric(TVRT[i,j])*retention}}
+    TVRT = data.frame(round(TVRT,2))
+    return(data.frame(TVRT))
+  })
   
   
   dataInput <- reactive({
@@ -48,43 +91,19 @@ function(input, output){
                             dim1=input$Brand,
                             dim2=input$Product)
     test=a
-    
-    if(input$Seasonal==T){
-      test$seasonal=0
-      r=10
-      test$seasonal[test$month<=7]=r*test$month[test$month<=7]
-      test$seasonal[test$month>7]=7*r-r*(test$month[test$month>7]-7)
-      plot(test$date,test$seasonal)
-      test$Y=test$Y+test$seasonal
-      
-    }
-    if(input$Holiday==T){
-      plusWeekends<-function(h){
-        h<-as.Date(h)
-        return(c(h-2,h-1,h,h+1,h+2))
-      }
 
-      holidays <- c(plusWeekends(USLaborDay(2013:(2013+input$Year))),
-                  #  plusWeekends(USThanksgivingDay(2013:(2013+input$Year))),
-                 #   plusWeekends(USMemorialDay(2013:(2013+input$Year))),
-                    plusWeekends(USNewYearsDay(2013:(2013+input$Year))),
-                    plusWeekends(USChristmasDay(2013:(2013+input$Year))))
-      
-      test$holiday=as.numeric(test$date %in% holidays)
-      test$Y=test$Y+50*test$holiday
-    }
     
     ## Canni
-    Cannibalization=test$Y[test$Brand==levels(test$Brand)[1]]
-    test$Y[test$Brand==levels(test$Brand)[2]]=test$Y[test$Brand==levels(test$Brand)[2]]-input$Cannibalization*Cannibalization
-    test$Y[test$Brand==levels(test$Brand)[1]]=test$Y[test$Brand==levels(test$Brand)[1]]+input$Cannibalization*Cannibalization
+    #Cannibalization=test$Y[test$Brand==levels(test$Brand)[1]]
+   # test$Y[test$Brand==levels(test$Brand)[2]]=test$Y[test$Brand==levels(test$Brand)[2]]-input$Cannibalization*Cannibalization
+  #  test$Y[test$Brand==levels(test$Brand)[1]]=test$Y[test$Brand==levels(test$Brand)[1]]+input$Cannibalization*Cannibalization
  
     ## Halo
-    Halo1=test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[1]]
-    Halo2=test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[2]]
+   # Halo1=test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[1]]
+   # Halo2=test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[2]]
     
-    test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[2]]=test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[2]]+ input$Halo*Halo1
-    test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[1]]=test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[1]]+ input$Halo*Halo2
+   # test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[2]]=test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[2]]+ input$Halo*Halo1
+   # test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[1]]=test$Y[test$Brand==levels(test$Brand)[1] & test$Product==levels(test$Product)[1]]+ input$Halo*Halo2
     
     
     return(test)
@@ -96,26 +115,109 @@ function(input, output){
   }
   )
   
-  dataInput2 <- reactive({
-    X=dataInput()
-    TV=dataInputTV()
-    X$Y=X$Y+0.1*TV
-    final=data.frame(X,TV)
-    return(final)
+  
+  dataInputcategory <-reactive({
+
+    
+    rate = 0.02
+    category = 20*rep(rate*(1:(52*input$Year)),input$Brand*input$Product)
+    
+    test = dataInput()
+    
+    test = data.frame(test,category=category)
+    
+    
+    
+    if(input$Seasonal==T){
+      test$seasonal=0
+      r=5
+      test$seasonal[test$month<=7]=r*test$month[test$month<=7]
+      test$seasonal[test$month>7]=7*r-r*(test$month[test$month>7]-7)
+      plot(test$date,test$seasonal)
+      test$category=test$category+test$seasonal
+      
+    }
+    if(input$Holiday==T){
+      plusWeekends<-function(h){
+        h<-as.Date(h)
+        return(c(h-2,h-1,h,h+1,h+2))
+      }
+      
+      holidays <- c(plusWeekends(USLaborDay(2013:(2013+input$Year))),
+                    #  plusWeekends(USThanksgivingDay(2013:(2013+input$Year))),
+                    #   plusWeekends(USMemorialDay(2013:(2013+input$Year))),
+                    plusWeekends(USNewYearsDay(2013:(2013+input$Year))),
+                    plusWeekends(USChristmasDay(2013:(2013+input$Year))))
+      
+      test$holiday=as.numeric(test$date %in% holidays)
+      test$category=test$category+20*test$holiday
+    }
+    
+    
+    
+    test = data.frame(test)
+    test$Totalcategory = test$category 
+    test$category =test$category * input$Marketshare
+    test$Y = test$Y + test$category
+    test = test[,which(names(test) %in% c("date","Brand","Product","Y","Base","category","Totalcategory"))]
+
+    return(test)
     
   })
+
   
+  output$plotcategory <-  renderPlotly({
+    ggplotly(dataInputcategory() %>% group_by(date) %>% summarise(category = sum(category), 
+                                                                  Totalcategory =sum(Totalcategory)) %>%
+               melt(id = "date") %>%
+             ggplot(aes(date,value,colour= variable)) +geom_line())
+  }
+  )
+  
+  
+  values <- reactiveValues(default = 0)
+  
+  observeEvent(input$goButton,{
+    values$default <- input$goButton
+
+  })
+  
+  
+  
+  ntext <- eventReactive(input$goButton, {
+
+    TV=dataInputTV()
+    TVRT = dataInputTVRT()
+    names(TV) = input$Activityname
+    Yimpact <- round(as.numeric(input$Elasticity)*apply(TVRT,1,sum),2)
+    usename = c(paste(input$Activityname,1:input$variablen,sep=""))
+    
+    return(list(data.frame(TV),data.frame(Yimpact),usename))
+
+  })
+  
+
   output$table <- DT::renderDataTable(DT::datatable({
-    dataInput2()
+
+    
+    if( values$default==0){final <<- dataInputcategory()}
+    else{
+      justname = names(final)
+      final <<- data.frame(final,data.frame(ntext()[1]))
+      names(final) <<- c(justname,c(ntext()[[3]]))
+      final$Y <<- as.numeric(final$Y) + as.numeric(unlist(ntext()[[2]]))
+    }
+    final
+    
+    
   }))
-  
 
   
   
   output$downloadData <- downloadHandler(
-    filename = function() { paste("SimulatedData", '.csv', sep='') },
+    filename = function() { paste(input$Projectname,'SimulatedData', '.csv', sep='') },
     content = function(file) {
-      write.csv(dataInput2(), file)
+      write.csv(final, file, row.names = FALSE,na="NA")
     }
   )
   
