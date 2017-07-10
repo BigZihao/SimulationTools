@@ -80,7 +80,7 @@ navbarPage(
              textInput("rangemin", label = h3("Range Min"), value = "100"),
              textInput("rangemax", label = h3("Range Max"), value = "250"),
              #sliderInput("TV", label = h3("TV GRP"), min = 100, max = 250, value = c(120,150)),
-             sliderInput("TVRT", label = h3("retention rate"), min = 0, max = 1, value = 0.9),
+             sliderInput("TVRT", label = h3("retention rate"), min = 0, max = 1, value = 0),
              h3("Flghting Pattern"),
              #checkboxInput("Pattern","Pattern 1", value = FALSE, width = NULL),
                fileInput('ImportPattern', 'Import Pattern',

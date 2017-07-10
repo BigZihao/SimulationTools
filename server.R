@@ -38,8 +38,7 @@ function(input, output){
     return(a)
   })
   
-  if( values$default==0){final <<- dataInputcategory()}
-  
+
   dataInputTV <- reactive({
     
     TV = round(runif(input$Year*input$Brand*input$Product*52,min=as.numeric(input$rangemin),
@@ -77,7 +76,7 @@ function(input, output){
     retention = retentionrate^(c(1,2,3,4,5,6,7,8,9,10))
     TVRT = TV
     for(j in 1:dim(TVRT)[2]){
-    for(i in 1:(dim(TVRT)[1]-10)){TVRT[i:(i+9),j]=as.numeric(TVRT[i,j])*retention}}
+    for(i in 1:(dim(TVRT)[1]-10)){TVRT[i:(i+9),j]=TVRT[i:(i+9),j]+as.numeric(TVRT[i,j])*retention}}
     TVRT = data.frame(round(TVRT,2))
     return(data.frame(TVRT))
   })
@@ -191,6 +190,7 @@ function(input, output){
     names(TV) = input$Activityname
     Yimpact <- round(as.numeric(input$Elasticity)*apply(TVRT,1,sum),2)
     usename = c(paste(input$Activityname,1:input$variablen,sep=""))
+    if( values$default==0){final <<- dataInputcategory()}
     
     return(list(data.frame(TV),data.frame(Yimpact),usename))
 
