@@ -211,6 +211,15 @@ function(input, output){
     
     
   }))
+  
+  names = NULL
+
+  output$text1 <- renderText({ 
+    
+    names <<-  c(names,ntext()[[3]])
+    names
+    
+  })
 
   
   

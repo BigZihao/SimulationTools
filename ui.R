@@ -97,7 +97,10 @@ navbarPage(
            
            mainPanel(
              fluidRow(
-               plotlyOutput('plotTV')
+               plotlyOutput('plotTV'),
+               h3("Marketing activities"),
+               textOutput("text1")
+               
              )
              
            )
