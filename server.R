@@ -1,15 +1,12 @@
-
 library(magrittr)
 library(shiny)
 library(dplyr)
 library(ggplot2)
 library(gam)
-library(car)
 library(mgcv)
 library(splines)
 library(plotly)
 library(rbokeh)
-library(effects)
 library(reshape2)
 require(lubridate)
 library(timeDate)
@@ -17,7 +14,9 @@ library(lubridate)
 library(forecast)
 library(ggplot2)
 library(reshape2)
-library(lme4)
+require(dygraphs)
+require(xts)
+
 # Define server logic required to draw a histogram
 
 function(input, output, session){

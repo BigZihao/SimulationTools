@@ -3,16 +3,14 @@ library(shiny)
 library(dplyr)
 library(ggplot2)
 library(gam)
-library(car)
 library(mgcv)
 library(splines)
 library(plotly)
 library(rbokeh)
-library(effects)
 library(reshape2)
 require(lubridate)
-library(dygraphs)
-library(xts)
+require(dygraphs)
+require(xts)
 
 
 generatedata1=function(time1,dim1,dim2){

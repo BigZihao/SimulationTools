@@ -2,12 +2,10 @@ library(shiny)
 library(dplyr)
 library(ggplot2)
 library(gam)
-library(car)
 library(mgcv)
 library(splines)
 library(plotly)
 library(rbokeh)
-library(effects)
 library(reshape2)
 
 
