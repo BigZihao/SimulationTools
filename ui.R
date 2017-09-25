@@ -23,6 +23,7 @@ navbarPage(
            
            sidebarPanel( 
              textInput("Projectname", label = h3("Project Name"), value = "Project"),
+             textInput("TotalVolume", label = h3("Total Volume"), value = 10000),
              numericInput("Brand",
                                        "Brand:", 2,
                                        min = 2, max = 6),
@@ -48,12 +49,14 @@ navbarPage(
   
   
   
+  
   tabPanel("Category Variable",
            
            sidebarPanel( checkboxInput("Seasonal", "Seasonal", value = FALSE, width = NULL),
                          checkboxInput("Holiday","Holiday", value = FALSE, width = NULL),
-                        sliderInput("Marketshare", label = h3("Market Share"), min = 0, max = 1, value = 0.1)
+                         sliderInput("Marketshare", label = h3("Market Share"), min = 0, max = 1, value = 0.1)
                          # sliderInput("Halo", label = h3("Halo"), min = 0, max = 1, value = 0.1)
+
            ),
            mainPanel(
              fluidRow(
@@ -65,19 +68,39 @@ navbarPage(
            
            
            
+  ),
+  
+  
+  tabPanel("Volumn Contribution",
+           
+           sidebarPanel(   textInput("Activityname_volumn", label = h3("Activity Measure Name"), value = "TV"),
+                           sliderInput("VolumnContribution", label = h3("Volumn Contribution"), min = 0, max = 1, value = 0.1),
+                           actionButton("volumnButton", "Add")
+                         
+           ),
+           mainPanel(
+             fluidRow(
+               
+               plotOutput('plotvolumncontribution')
+             )
+             
+           )
            
            
            
   ),
+  
+
+  
 
   
   
   tabPanel("Marketing Activities",
            
            sidebarPanel(
-             textInput("Activityname", label = h3("Activity Measure Name"), value = "TV"),
-             textInput("variablen", label = h3("Variable Numbers"), value = "2"),
-             textInput("rangemin", label = h3("Range Min"), value = "100"),
+             uiOutput("activity"),
+             textInput("variablen", label = h3("Variable Name"), value = "copy1"),
+             textInput("rangemin", label = h3("Range Min"), value = "10"),
              textInput("rangemax", label = h3("Range Max"), value = "250"),
              #sliderInput("TV", label = h3("TV GRP"), min = 100, max = 250, value = c(120,150)),
              sliderInput("TVRT", label = h3("retention rate"), min = 0, max = 1, value = 0),
@@ -87,7 +110,6 @@ navbarPage(
                          accept=c('text/csv', 
                                   'text/comma-separated-values,text/plain', 
                                   '.csv')),
-             textInput("Elasticity", label = h3("Elasticity"), value = "1"),
              textInput("ROI", label = h3("ROI"), value = "1"),
              br(),
              actionButton("goButton", "Go!"),
@@ -108,6 +130,8 @@ navbarPage(
 
   
   
+  
+  
   tabPanel("Data Format and Download",
 
            mainPanel(
@@ -115,6 +139,19 @@ navbarPage(
                h3("Download Data"),
                downloadButton('downloadData', 'Download'),
                DT::dataTableOutput("table")
+             )
+             
+           )
+  ),
+  
+  
+  tabPanel("Visual",
+           
+           mainPanel(
+             fluidRow(
+               h3("Visual Data"),
+               dygraphOutput("dygraph")
+
              )
              
            )

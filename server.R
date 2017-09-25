@@ -20,7 +20,7 @@ library(reshape2)
 library(lme4)
 # Define server logic required to draw a histogram
 
-function(input, output){
+function(input, output, session){
 
   
   contents <- reactive({
@@ -54,12 +54,8 @@ function(input, output){
     
     TV=TV*TVP
     TV = data.frame(TV)
-    names(TV) = paste(input$Activityname,"1")
-    
-    for(i in c(2:(input$variablen))){
-      TV[paste(input$Activityname,i)] = round(runif(input$Year*input$Brand*input$Product*52,min=as.numeric(input$rangemin),
-                                                                      max=as.numeric(input$rangemax)),2)*TVP}
-    
+    names(TV) = paste(input$Activityname,"_",input$variablen)
+
     return(data.frame(TV))
   })
   
@@ -75,8 +71,7 @@ function(input, output){
     retentionrate = as.numeric(input$TVRT)
     retention = retentionrate^(c(1,2,3,4,5,6,7,8,9,10))
     TVRT = TV
-    for(j in 1:dim(TVRT)[2]){
-    for(i in 1:(dim(TVRT)[1]-10)){TVRT[i:(i+9),j]=TVRT[i:(i+9),j]+as.numeric(TVRT[i,j])*retention}}
+    for(i in 1:(dim(TVRT)[1]-10)){TVRT[i:(i+9),]=TVRT[i:(i+9),]+as.numeric(TVRT[i,])*retention}
     TVRT = data.frame(round(TVRT,2))
     return(data.frame(TVRT))
   })
@@ -118,8 +113,8 @@ function(input, output){
   dataInputcategory <-reactive({
 
     
-    rate = 0.02
-    category = 20*rep(rate*(1:(52*input$Year)),input$Brand*input$Product)
+    rate = 0.01
+    category = 20*as.numeric(input$TotalVolume)*rep(rate*(1:(52*input$Year)),input$Brand*input$Product)
     
     test = dataInput()
     
@@ -129,7 +124,7 @@ function(input, output){
     
     if(input$Seasonal==T){
       test$seasonal=0
-      r=5
+      r=1*as.numeric(input$TotalVolume)
       test$seasonal[test$month<=7]=r*test$month[test$month<=7]
       test$seasonal[test$month>7]=7*r-r*(test$month[test$month>7]-7)
       plot(test$date,test$seasonal)
@@ -149,7 +144,7 @@ function(input, output){
                     plusWeekends(USChristmasDay(2013:(2013+input$Year))))
       
       test$holiday=as.numeric(test$date %in% holidays)
-      test$category=test$category+20*test$holiday
+      test$category=test$category+3*test$holiday*as.numeric(input$TotalVolume)
     }
     
     
@@ -157,10 +152,14 @@ function(input, output){
     test = data.frame(test)
     test$Totalcategory = test$category 
     test$category =test$category * input$Marketshare
-    test$Y = test$Y + test$category
-    test = test[,which(names(test) %in% c("date","Brand","Product","Y","Base","category","Totalcategory"))]
+    test$Y = test$error + test$category
+    test = test[,which(names(test) %in% c("date","Brand","Product","Y","Base","category","Totalcategory","error"))]
 
+  
+    
     return(test)
+    
+    
     
   })
 
@@ -176,23 +175,108 @@ function(input, output){
   
   values <- reactiveValues(default = 0)
   
-  observeEvent(input$goButton,{
-    values$default <- input$goButton
+  observeEvent(input$volumnButton,{
+    values$default <- input$volumnButton
 
   })
   
   
   
-  ntext <- eventReactive(input$goButton, {
+  slices = c(1)
+  lbls = c("category")
+  
+  ntext2 <- eventReactive(input$volumnButton, {
+    
+    final <<- dataInputcategory()
+    if(input$Activityname_volumn %in% lbls){
+      slices[lbls  %in%  input$Activityname_volumn] = input$VolumnContribution
+      slices[1] <<- 1 -sum(slices[-1])
+    }
+    else{
+   slices <<- c(slices, input$VolumnContribution)
+   slices[1] <<- 1 -sum(slices[-1])
+   lbls <<- c(lbls, input$Activityname_volumn)
+    }
+   lmcoefficients <<-  c(as.numeric(input$TotalVolume)*slices[1]/sum(final$category))
+    
+   if( values$default==0){
+     final <<- dataInputcategory()
+     lmcoefficients <<-  c(as.numeric(input$TotalVolume)/sum(final$category))
+     variablenames <<- c("category")
+     final$Y <<- final[,variablenames] %*% lmcoefficients + final$error
+     
+   }
 
-    TV=dataInputTV()
-    TVRT = dataInputTVRT()
-    names(TV) = input$Activityname
-    Yimpact <- round(as.numeric(input$Elasticity)*apply(TVRT,1,sum),2)
-    usename = c(paste(input$Activityname,1:input$variablen,sep=""))
+    return(list(slices,lbls))
+
+    
+  })
+  
+
+  output$activity <- renderUI({
+    selectInput("Activityname", label = h3("Activity Measure Name"), choices =as.list(ntext2()[[2]][-1]))
+  })
+  
+  
+  output$plotvolumncontribution <-  renderPlot({
+    pie(ntext2()[[1]], labels = ntext2()[[2]], main="Pie Chart of Countries")
+  }
+  )
+  
+  
+  
+  
+  
+  
+  names = NULL
+  variablenames = c("category")
+  
+  ntext <- eventReactive(input$goButton, {
+    
+
+    usename = paste(input$Activityname,"_",input$variablen,sep="")
     if( values$default==0){final <<- dataInputcategory()}
     
-    return(list(data.frame(TV),data.frame(Yimpact),usename))
+ 
+      TV=dataInputTV()
+      TVRT = dataInputTVRT()
+      names(TV) = usename 
+
+        justname = names(final)
+        if(usename %in% names(final)){
+          final[,usename] <<- data.frame(TV)
+          final_retention[,usename] <<- data.frame(TVRT)
+        } else{
+          final <<- data.frame(cbind(final, data.frame(data.frame(TV))))
+        final_retention <<- data.frame(cbind(final, data.frame(data.frame(TVRT))))
+        names(final) <<- c(justname,usename)
+        names(final_retention) <<- c(justname,usename)
+        variablenames <<- c(variablenames, usename)}
+        
+        
+        
+        
+       activityvolumn  = ntext2()[[1]][ntext2()[[2]]==input$Activityname_volumn]
+       
+      
+       
+       if(length(grep(input$Activityname,names(final)))==1){
+         activity = sum(final_retention[,grep(input$Activityname,names(final))])
+         }
+       else{ activity = apply(final_retention[,grep(input$Activityname,names(final))],2,sum)}
+      
+
+        coef = (as.numeric(input$TotalVolume)*activityvolumn/length(activity))/activity
+        
+       lmcoefficients[grep(input$Activityname, variablenames)] <<- coef
+
+     final$Y <<- round(apply(t(t(final[,names(final_retention) %in% variablenames])*lmcoefficients),1,sum) ,2)
+        
+      
+    return(list(data.frame(final),usename))
+   
+
+   
 
   })
   
@@ -202,25 +286,43 @@ function(input, output){
     
     if( values$default==0){final <<- dataInputcategory()}
     else{
-      justname = names(final)
-      final <<- data.frame(final,data.frame(ntext()[1]))
-      names(final) <<- c(justname,c(ntext()[[3]]))
-      final$Y <<- as.numeric(final$Y) + as.numeric(unlist(ntext()[[2]]))
+     final = ntext()[[1]]
+      
     }
+    
     final
     
     
   }))
   
-  names = NULL
+
 
   output$text1 <- renderText({ 
     
-    names <<-  c(names,ntext()[[3]])
+    names <<-  unique(c(names,ntext()[[2]]))
     names
-    
   })
 
+  
+  output$dygraph <- renderDygraph({
+    if( values$default==0){final <<- dataInputcategory()}
+    else{
+      final = ntext()[[1]]
+      
+    }
+  data <- data.frame(final %>% group_by(date) %>% summarise(Y=sum(Y)))
+  #convert the rownames of your data frame to a year-month-day, 
+  #used 2012 because it has 366 days and subsetted to fit the example
+  rownames(data)<-strptime(final$date,format="%Y-%m-%d")[1:(52*input$Year)]
+  #transform to xts
+  data<-as.xts(data)
+  
+  #plot
+  dygraph(data, main = "Simulation") 
+
+  })
+  
+  
   
   
   output$downloadData <- downloadHandler(

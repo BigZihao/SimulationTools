@@ -11,15 +11,20 @@ detachAllPackages <- function() {
   
 }
 detachAllPackages()
+library(shiny)
+
+
+
+
+
 rm(list=ls(all=TRUE))
-library(shiny)
-#install.packages("needs")
-
-
-library(shiny)
 runApp('P:/SimulationTools',host="0.0.0.0",port=5050)
 
-#172.16.2.245:5050
+
+
+
+
+
 
 
 
