@@ -9,9 +9,9 @@ library(rbokeh)
 library(reshape2)
 
 
-
+library(shinythemes)
 # Define UI for application that draws a histogram
-navbarPage(
+navbarPage(theme = shinytheme("cerulean"),
   # theme = shinytheme("lumen"),
   "Simulation Tool",
   
@@ -21,7 +21,7 @@ navbarPage(
            
            sidebarPanel( 
              textInput("Projectname", label = h3("Project Name"), value = "Project"),
-             textInput("TotalVolume", label = h3("Total Volume"), value = 10000),
+            
              numericInput("Brand",
                                        "Brand:", 2,
                                        min = 2, max = 6),
@@ -50,7 +50,9 @@ navbarPage(
   
   tabPanel("Category Variable",
            
-           sidebarPanel( checkboxInput("Seasonal", "Seasonal", value = FALSE, width = NULL),
+           sidebarPanel( 
+             textInput("TotalVolume", label = h3("Total Category Volume"), value = 10000),
+             checkboxInput("Seasonal", "Seasonal", value = FALSE, width = NULL),
                          checkboxInput("Holiday","Holiday", value = FALSE, width = NULL),
                          sliderInput("Marketshare", label = h3("Market Share"), min = 0, max = 1, value = 0.1)
                          # sliderInput("Halo", label = h3("Halo"), min = 0, max = 1, value = 0.1)

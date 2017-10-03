@@ -33,8 +33,10 @@ function(input, output, session){
     if(is.null(inFile))
       return(NULL)
     
+    
     a= read.csv(inFile$datapath, header = FALSE, sep=",")
     return(a)
+    
   })
   
 
@@ -112,8 +114,8 @@ function(input, output, session){
   dataInputcategory <-reactive({
 
     
-    rate = 0.01
-    category = 20*as.numeric(input$TotalVolume)*rep(rate*(1:(52*input$Year)),input$Brand*input$Product)
+    rate = 0.02
+    category = rep(rate*(1:(52*input$Year)),input$Brand*input$Product)
     
     test = dataInput()
     
@@ -123,7 +125,7 @@ function(input, output, session){
     
     if(input$Seasonal==T){
       test$seasonal=0
-      r=1*as.numeric(input$TotalVolume)
+      r=1
       test$seasonal[test$month<=7]=r*test$month[test$month<=7]
       test$seasonal[test$month>7]=7*r-r*(test$month[test$month>7]-7)
       plot(test$date,test$seasonal)
@@ -143,18 +145,25 @@ function(input, output, session){
                     plusWeekends(USChristmasDay(2013:(2013+input$Year))))
       
       test$holiday=as.numeric(test$date %in% holidays)
-      test$category=test$category+3*test$holiday*as.numeric(input$TotalVolume)
+      test$category=test$category+2*test$holiday
+
+      
     }
     
     
     
     test = data.frame(test)
+    ratio = as.numeric(input$TotalVolume)/sum(test$category)
+    test$category  = round(ratio*test$category,2)
+    
+    
     test$Totalcategory = test$category 
-    test$category =test$category * input$Marketshare
+    test$category = test$category*as.numeric(input$Marketshare)
+    
     test$Y = test$error + test$category
-    test = test[,which(names(test) %in% c("date","Brand","Product","Y","Base","category","Totalcategory","error"))]
+    test = test[,which(names(test) %in% c("date","Brand","Product","Y","Base","Totalcategory","error"))]
 
-  
+
     
     return(test)
     
@@ -164,7 +173,7 @@ function(input, output, session){
 
   
   output$plotcategory <-  renderPlotly({
-    ggplotly(dataInputcategory() %>% group_by(date) %>% summarise(category = sum(category), 
+    ggplotly(dataInputcategory() %>% group_by(date) %>% summarise(category = sum(Totalcategory)*input$Marketshare, 
                                                                   Totalcategory =sum(Totalcategory)) %>%
                melt(id = "date") %>%
              ggplot(aes(date,value,colour= variable)) +geom_line())
@@ -182,7 +191,7 @@ function(input, output, session){
   
   
   slices = c(1)
-  lbls = c("category")
+  lbls = c("Totalcategory")
   
   ntext2 <- eventReactive(input$volumnButton, {
     
@@ -196,12 +205,16 @@ function(input, output, session){
    slices[1] <<- 1 -sum(slices[-1])
    lbls <<- c(lbls, input$Activityname_volumn)
     }
-   lmcoefficients <<-  c(as.numeric(input$TotalVolume)*slices[1]/sum(final$category))
+  
+    
+    Ytotalvolume<<- as.numeric(input$TotalVolume)*as.numeric(input$Marketshare)/slices[1]
+
+   lmcoefficients <<-  c(as.numeric(Ytotalvolume)*slices[1]/sum(final$Totalcategory))
     
    if( values$default==0){
      final <<- dataInputcategory()
-     lmcoefficients <<-  c(as.numeric(input$TotalVolume)/sum(final$category))
-     variablenames <<- c("category")
+     lmcoefficients <<-  c(as.numeric(Ytotalvolume)/sum(final$Totalcategory))
+     variablenames <<- c("Totalcategory")
      final$Y <<- final[,variablenames] %*% lmcoefficients + final$error
      
    }
@@ -218,7 +231,7 @@ function(input, output, session){
   
   
   output$plotvolumncontribution <-  renderPlot({
-    pie(ntext2()[[1]], labels = ntext2()[[2]], main="Pie Chart of Countries")
+    pie(ntext2()[[1]], labels = paste(ntext2()[[2]],ntext2()[[1]]), main="Pie Chart of Countries")
   }
   )
   
@@ -228,7 +241,7 @@ function(input, output, session){
   
   
   names = NULL
-  variablenames = c("category")
+  variablenames = c("Totalcategory")
   
   ntext <- eventReactive(input$goButton, {
     
@@ -265,13 +278,12 @@ function(input, output, session){
        else{ activity = apply(final_retention[,grep(input$Activityname,names(final))],2,sum)}
       
 
-        coef = (as.numeric(input$TotalVolume)*activityvolumn/length(activity))/activity
+        coef = (as.numeric(Ytotalvolume)*activityvolumn/length(activity))/activity
         
        lmcoefficients[grep(input$Activityname, variablenames)] <<- coef
 
-     final$Y <<- round(apply(t(t(final[,names(final_retention) %in% variablenames])*lmcoefficients),1,sum) ,2)
-        
-      
+     final$Y <<- round(apply(t(t(final_retention[,names(final_retention) %in% variablenames])*lmcoefficients),1,sum) ,2)
+     
     return(list(data.frame(final),usename))
    
 
